@@ -1,9 +1,10 @@
 /**
  * Configuration file for the Map Scrollytelling Engine
- * In production, set VITE_GOOGLE_MAPS_API_KEY in Vercel environment variables
+ * Set VITE_GOOGLE_MAPS_API_KEY in .env.local for local dev
+ * Set in Vercel environment variables for production
  */
 
-export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyDc0bDnYz4-sSDAHVQRSVQM1mBS2inAgjk";
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // Map configuration
 export const MAP_CONFIG = {
