@@ -1,11 +1,14 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * Image Lightbox Component
- * Full-screen image viewer with keyboard navigation
+ * Full-screen image viewer with keyboard and touch navigation
  */
 export default function ImageLightbox({ images, currentIndex, isOpen, onClose, onNavigate }) {
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+
     // Handle keyboard navigation
     const handleKeyDown = useCallback((e) => {
         if (!isOpen) return;
@@ -28,6 +31,30 @@ export default function ImageLightbox({ images, currentIndex, isOpen, onClose, o
                 break;
         }
     }, [isOpen, currentIndex, images.length, onClose, onNavigate]);
+
+    // Touch handlers for swipe navigation
+    const handleTouchStart = useCallback((e) => {
+        touchStartX.current = e.touches[0].clientX;
+    }, []);
+
+    const handleTouchMove = useCallback((e) => {
+        touchEndX.current = e.touches[0].clientX;
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        const diff = touchStartX.current - touchEndX.current;
+        const threshold = 50; // minimum swipe distance
+
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0 && currentIndex < images.length - 1) {
+                // Swipe left - next image
+                onNavigate(currentIndex + 1);
+            } else if (diff < 0 && currentIndex > 0) {
+                // Swipe right - prev image
+                onNavigate(currentIndex - 1);
+            }
+        }
+    }, [currentIndex, images.length, onNavigate]);
 
     useEffect(() => {
         window.addEventListener("keydown", handleKeyDown);
@@ -105,13 +132,13 @@ export default function ImageLightbox({ images, currentIndex, isOpen, onClose, o
                             </div>
                         )}
 
-                        {/* Previous Button */}
+                        {/* Previous Button - hidden on small screens (use swipe) */}
                         {hasPrev && (
                             <button
                                 onClick={() => onNavigate(currentIndex - 1)}
-                                className="absolute left-4 md:left-8 z-10 w-12 h-12 rounded-full
+                                className="hidden md:flex absolute left-4 md:left-8 z-10 w-12 h-12 rounded-full
                                          bg-white/10 backdrop-blur-sm border border-white/20
-                                         flex items-center justify-center
+                                         items-center justify-center
                                          text-white/80 hover:text-white hover:bg-white/20
                                          transition-all duration-200"
                             >
@@ -121,13 +148,13 @@ export default function ImageLightbox({ images, currentIndex, isOpen, onClose, o
                             </button>
                         )}
 
-                        {/* Next Button */}
+                        {/* Next Button - hidden on small screens (use swipe) */}
                         {hasNext && (
                             <button
                                 onClick={() => onNavigate(currentIndex + 1)}
-                                className="absolute right-4 md:right-8 z-10 w-12 h-12 rounded-full
+                                className="hidden md:flex absolute right-4 md:right-8 z-10 w-12 h-12 rounded-full
                                          bg-white/10 backdrop-blur-sm border border-white/20
-                                         flex items-center justify-center
+                                         items-center justify-center
                                          text-white/80 hover:text-white hover:bg-white/20
                                          transition-all duration-200"
                             >
@@ -137,7 +164,7 @@ export default function ImageLightbox({ images, currentIndex, isOpen, onClose, o
                             </button>
                         )}
 
-                        {/* Main Image */}
+                        {/* Main Image - with touch swipe support */}
                         <motion.img
                             key={currentIndex}
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -146,16 +173,22 @@ export default function ImageLightbox({ images, currentIndex, isOpen, onClose, o
                             transition={{ duration: 0.2 }}
                             src={currentImage?.url}
                             alt={`Photo ${currentIndex + 1}`}
-                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                            className="max-w-full max-h-[80vh] md:max-h-[85vh] object-contain rounded-lg shadow-2xl touch-pan-y"
                             onClick={(e) => e.stopPropagation()}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
                         />
 
                         {/* Thumbnail Strip */}
                         {images.length > 1 && (
-                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10
+                            <div
+                                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10
                                           flex gap-2 p-2 rounded-xl
                                           bg-black/50 backdrop-blur-sm border border-white/10
-                                          max-w-[90vw] overflow-x-auto">
+                                          max-w-[90vw] overflow-x-auto"
+                                style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0))" }}
+                            >
                                 {images.map((img, idx) => (
                                     <button
                                         key={idx}

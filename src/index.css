@@ -59,11 +59,13 @@ body {
 /* All sections: pointer-events-none to allow map clicks through */
 .story-section {
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport for mobile browsers */
   width: 100%;
   display: flex;
   align-items: flex-end;
-  justify-content: flex-end;
-  padding: 1rem 2rem 6rem 2rem;
+  justify-content: center;
+  padding: 1rem;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0));
   scroll-snap-align: start;
   scroll-snap-stop: always;
   /* CRITICAL: Allow clicks to pass through to map */
@@ -73,21 +75,23 @@ body {
 @media (min-width: 768px) {
   .story-section {
     align-items: center;
+    justify-content: flex-end;
     padding: 2rem 4rem;
   }
 }
 
-/* Intro section - default (mobile): centered/bottom */
+/* Intro section - mobile: centered bottom, desktop: top-right */
 .story-section--intro {
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 4rem;
+  justify-content: center;
   padding-top: 0;
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0));
 }
 
-/* Outro section - default (mobile): centered */
+/* Outro section - mobile: centered, desktop: top-right */
 .story-section--outro {
   min-height: 70vh;
+  min-height: 70dvh;
   align-items: center;
   justify-content: center;
   padding-top: 0;

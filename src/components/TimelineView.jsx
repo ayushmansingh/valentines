@@ -99,8 +99,9 @@ export default function TimelineView({ isOpen, onClose, onImageClick }) {
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed inset-y-0 right-0 w-full max-w-lg bg-slate-900/95 backdrop-blur-xl z-[91]
+                        className="fixed inset-y-0 right-0 w-full md:max-w-lg bg-slate-900/95 backdrop-blur-xl z-[91]
                                  border-l border-white/10 shadow-2xl overflow-hidden flex flex-col"
+                        style={{ paddingBottom: "env(safe-area-inset-bottom, 0)" }}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-white/10">

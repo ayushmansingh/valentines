@@ -54,7 +54,7 @@ function StorySection({ chapter, index, onVisible }) {
                     boxShadow: "0 4px 24px rgba(0, 0, 0, 0.06)",
                 }}
             >
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                     {/* Chapter indicator - monospace for modern travel-log feel */}
                     <div className="flex items-center gap-3 mb-3">
                         <span className="h-px w-6 bg-slate-400" />

@@ -97,22 +97,25 @@ export default function App() {
         onClose={handleCloseModal}
       />
 
-      {/* Timeline button - fixed in corner */}
+      {/* Timeline button - fixed in corner, mobile-safe positioning */}
       <button
         onClick={() => setTimelineOpen(true)}
-        className="fixed bottom-6 right-6 z-40 px-4 py-3 rounded-xl
+        className="fixed bottom-4 left-4 md:bottom-6 md:right-6 md:left-auto z-40 
+                 px-3 py-2 md:px-4 md:py-3 rounded-xl
                  bg-gradient-to-r from-rose-500/80 to-violet-500/80 backdrop-blur-sm
-                 text-white font-sans text-sm font-medium
+                 text-white font-sans text-xs md:text-sm font-medium
                  border border-white/20 shadow-lg
                  hover:from-rose-500 hover:to-violet-500 
-                 hover:scale-105 transition-all duration-200
+                 hover:scale-105 active:scale-95 transition-all duration-200
                  flex items-center gap-2"
+        style={{ marginBottom: "env(safe-area-inset-bottom, 0)" }}
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Our Timeline
+        <span className="hidden sm:inline">Our Timeline</span>
+        <span className="sm:hidden">Timeline</span>
       </button>
 
       {/* Timeline view */}

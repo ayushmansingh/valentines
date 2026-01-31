@@ -85,15 +85,16 @@ export default function DetailModal({ chapter, isOpen, onClose }) {
 
                         {/* Modal */}
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
+                            className="fixed inset-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
                        md:w-full md:max-w-2xl md:max-h-[90vh]
-                       bg-slate-900/95 backdrop-blur-xl rounded-2xl overflow-hidden
-                       shadow-2xl shadow-black/50 border border-white/10
+                       bg-slate-900/95 backdrop-blur-xl md:rounded-2xl overflow-hidden
+                       shadow-2xl shadow-black/50 border-0 md:border md:border-white/10
                        z-50 flex flex-col"
+                            style={{ paddingBottom: "env(safe-area-inset-bottom, 0)" }}
                         >
                             {/* Close button */}
                             <button
