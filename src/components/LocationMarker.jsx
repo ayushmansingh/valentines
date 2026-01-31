@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 /**
  * Custom location marker component
- * Styled pin with pulse animation for active state
+ * Glassmorphism floating label design (no pin icon)
  */
 export default function LocationMarker({ chapter, isActive, onClick }) {
     return (
@@ -12,7 +12,7 @@ export default function LocationMarker({ chapter, isActive, onClick }) {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
         >
             {/* Pulse ring for active marker */}
@@ -20,78 +20,51 @@ export default function LocationMarker({ chapter, isActive, onClick }) {
                 <motion.div
                     className="absolute inset-0 flex items-center justify-center"
                     initial={{ scale: 1, opacity: 0.6 }}
-                    animate={{ scale: 2.5, opacity: 0 }}
+                    animate={{ scale: 2, opacity: 0 }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
                 >
-                    <div className="w-8 h-8 rounded-full bg-white/30" />
+                    <div className="w-full h-full rounded-xl bg-white/30" />
                 </motion.div>
             )}
 
-            {/* Marker container */}
+            {/* Glassmorphism floating label */}
             <div
                 className={`
-          relative flex flex-col items-center
-          transition-all duration-300
-        `}
+                    relative px-4 py-2.5 rounded-xl
+                    shadow-lg transition-all duration-300
+                    ${isActive
+                        ? "bg-white/95 backdrop-blur-md shadow-white/20"
+                        : "bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
+                    }
+                `}
+                style={{
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                }}
             >
-                {/* Pin head */}
-                <div
+                {/* City name */}
+                <span
                     className={`
-            w-10 h-10 rounded-full flex items-center justify-center
-            shadow-lg shadow-black/30
-            transition-all duration-300
-            ${isActive
-                            ? "bg-white text-slate-900 scale-110"
-                            : "bg-slate-800 text-white border border-white/20 hover:bg-slate-700"
-                        }
-          `}
-                >
-                    <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                    </svg>
-                </div>
-
-                {/* Pin tail */}
-                <div
-                    className={`
-            w-1 h-4 rounded-b-full
-            transition-all duration-300
-            ${isActive ? "bg-white" : "bg-slate-700"}
-          `}
-                />
-
-                {/* Label */}
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className={`
-            absolute -bottom-8 whitespace-nowrap
-            px-2 py-1 rounded-md text-xs font-medium
-            ${isActive
-                            ? "bg-white text-slate-900"
-                            : "bg-slate-800/90 text-white/80"
-                        }
-          `}
+                        font-serif text-sm font-semibold tracking-wide
+                        transition-colors duration-300
+                        ${isActive ? "text-slate-900" : "text-white"}
+                    `}
                 >
                     {chapter.title}
-                </motion.div>
+                </span>
+
+                {/* Subtle location dot */}
+                <div
+                    className={`
+                        absolute -bottom-1 left-1/2 -translate-x-1/2
+                        w-2 h-2 rounded-full
+                        transition-all duration-300
+                        ${isActive
+                            ? "bg-rose-500 shadow-lg shadow-rose-500/50"
+                            : "bg-white/60"
+                        }
+                    `}
+                />
             </div>
         </motion.div>
     );

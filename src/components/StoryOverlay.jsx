@@ -45,32 +45,39 @@ function StorySection({ chapter, index, onVisible }) {
                 exit={{ opacity: 0, y: -20 }}
                 viewport={{ once: false, amount: 0.3 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="story-card glass-dark rounded-2xl overflow-hidden shadow-2xl"
+                className="story-card rounded-2xl overflow-hidden shadow-xl"
+                style={{
+                    background: "rgba(255, 255, 255, 0.45)",
+                    backdropFilter: "blur(24px) saturate(180%)",
+                    WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.06)",
+                }}
             >
                 <div className="p-6">
-                    {/* Chapter indicator */}
+                    {/* Chapter indicator - monospace for modern travel-log feel */}
                     <div className="flex items-center gap-3 mb-3">
-                        <span className="h-px w-6 bg-white/40" />
-                        <span className="text-xs font-sans font-medium text-white/50 uppercase tracking-widest">
+                        <span className="h-px w-6 bg-slate-400" />
+                        <span className="text-xs font-mono font-medium text-slate-500 uppercase tracking-widest">
                             Chapter {index + 1}
                         </span>
                     </div>
 
-                    {/* Title */}
-                    <h2 className="font-serif text-2xl md:text-3xl font-semibold text-white mb-1 leading-tight">
+                    {/* Title - Serif for historical feel */}
+                    <h2 className="font-serif text-2xl md:text-3xl font-semibold text-slate-900 mb-1 leading-tight">
                         {chapter.title}
                     </h2>
 
                     {/* Subtitle */}
                     {chapter.subtitle && (
-                        <p className="font-serif italic text-base text-white/60 mb-3">
+                        <p className="font-serif italic text-base text-slate-600 mb-3">
                             {chapter.subtitle}
                         </p>
                     )}
 
                     {/* Hint */}
-                    <p className="text-sm font-sans text-white/40">
-                        Click the marker on the map to add or see memories
+                    <p className="text-sm font-sans text-slate-500">
+                        Tap the marker to explore memories or see memories.
                     </p>
                 </div>
             </motion.div>
@@ -109,15 +116,22 @@ function IntroSection({ onVisible }) {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                className="story-card story-card--intro glass-dark rounded-2xl text-center p-8 md:p-12"
+                className="story-card story-card--intro rounded-2xl text-center p-8 md:p-12"
+                style={{
+                    background: "rgba(255, 255, 255, 0.45)",
+                    backdropFilter: "blur(24px) saturate(180%)",
+                    WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.06)",
+                }}
             >
-                <h1 className="font-serif text-2xl md:text-3xl lg:text-4xl font-semibold text-white mb-4 leading-tight">
+                <h1 className="font-serif text-2xl md:text-3xl lg:text-4xl font-semibold text-slate-900 mb-4 leading-tight">
                     {introSection.title}
                 </h1>
-                <p className="font-sans text-base md:text-lg text-white/70 mb-4">
+                <p className="font-sans text-base md:text-lg text-slate-600 mb-4">
                     {introSection.subtitle}
                 </p>
-                <p className="font-sans text-sm text-white/50 mb-10">
+                <p className="font-sans text-sm text-slate-500 mb-10">
                     Click on the markers to see and add memories
                 </p>
 
@@ -127,14 +141,14 @@ function IntroSection({ onVisible }) {
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     className="flex flex-col items-center gap-2"
                 >
-                    <div className="w-5 h-8 rounded-full border border-white/30 flex items-start justify-center p-1">
+                    <div className="w-5 h-8 rounded-full border border-slate-400 flex items-start justify-center p-1">
                         <motion.div
                             animate={{ y: [0, 10, 0] }}
                             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                            className="w-1 h-1 rounded-full bg-white/50"
+                            className="w-1 h-1 rounded-full bg-slate-500"
                         />
                     </div>
-                    <span className="text-xs font-sans text-white/30 uppercase tracking-widest">
+                    <span className="text-xs font-sans text-slate-400 uppercase tracking-widest">
                         Scroll
                     </span>
                 </motion.div>
@@ -153,12 +167,19 @@ function OutroSection({ onEnterExploreMode, exploreMode }) {
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 transition={{ duration: 0.8 }}
-                className="story-card story-card--outro glass-dark rounded-2xl text-center p-8 md:p-12"
+                className="story-card story-card--outro rounded-2xl text-center p-8 md:p-12"
+                style={{
+                    background: "rgba(255, 255, 255, 0.45)",
+                    backdropFilter: "blur(24px) saturate(180%)",
+                    WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.06)",
+                }}
             >
-                <h2 className="font-serif text-2xl md:text-3xl font-semibold text-white mb-3">
+                <h2 className="font-serif text-2xl md:text-3xl font-semibold text-slate-900 mb-3">
                     {outroSection.title}
                 </h2>
-                <p className="font-sans text-base text-white/70 mb-8">
+                <p className="font-sans text-base text-slate-600 mb-8">
                     {outroSection.subtitle}
                 </p>
 
@@ -167,8 +188,8 @@ function OutroSection({ onEnterExploreMode, exploreMode }) {
                         onClick={onEnterExploreMode}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="px-6 py-3 rounded-full bg-white text-slate-900 font-sans font-medium
-                       shadow-lg shadow-white/20 hover:shadow-xl hover:shadow-white/30
+                        className="px-6 py-3 rounded-full bg-slate-900 text-white font-sans font-medium
+                       shadow-lg shadow-slate-900/20 hover:shadow-xl hover:bg-slate-800
                        transition-all duration-300"
                     >
                         {outroSection.buttonText}
@@ -176,8 +197,8 @@ function OutroSection({ onEnterExploreMode, exploreMode }) {
                 )}
 
                 {exploreMode && (
-                    <div className="flex items-center justify-center gap-2 text-green-400">
-                        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <div className="flex items-center justify-center gap-2 text-emerald-600">
+                        <div className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                         <span className="font-sans text-sm">Explore mode active!</span>
                     </div>
                 )}

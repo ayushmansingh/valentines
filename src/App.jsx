@@ -1,7 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import MapBackground from "./components/MapBackground";
 import StoryOverlay from "./components/StoryOverlay";
 import DetailModal from "./components/DetailModal";
+import TimelineView from "./components/TimelineView";
+import ImageLightbox from "./components/ImageLightbox";
 import { chapters } from "./data/story-data";
 
 /**
@@ -22,6 +24,14 @@ export default function App() {
 
   // Selected location for detail modal
   const [selectedLocation, setSelectedLocation] = useState(null);
+
+  // Timeline view state
+  const [timelineOpen, setTimelineOpen] = useState(false);
+
+  // Lightbox state (shared across components)
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Handler for when a chapter comes into view via scroll
   // Also exits explore mode when scrolling back
@@ -55,6 +65,13 @@ export default function App() {
     setSelectedLocation(null);
   }, []);
 
+  // Handler for opening lightbox from any component
+  const handleImageClick = useCallback((images, index) => {
+    setLightboxImages(images);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  }, []);
+
   return (
     <>
       {/* Fixed full-screen map background - z-0, always interactive */}
@@ -78,6 +95,40 @@ export default function App() {
         chapter={selectedLocation}
         isOpen={!!selectedLocation}
         onClose={handleCloseModal}
+      />
+
+      {/* Timeline button - fixed in corner */}
+      <button
+        onClick={() => setTimelineOpen(true)}
+        className="fixed bottom-6 right-6 z-40 px-4 py-3 rounded-xl
+                 bg-gradient-to-r from-rose-500/80 to-violet-500/80 backdrop-blur-sm
+                 text-white font-sans text-sm font-medium
+                 border border-white/20 shadow-lg
+                 hover:from-rose-500 hover:to-violet-500 
+                 hover:scale-105 transition-all duration-200
+                 flex items-center gap-2"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Our Timeline
+      </button>
+
+      {/* Timeline view */}
+      <TimelineView
+        isOpen={timelineOpen}
+        onClose={() => setTimelineOpen(false)}
+        onImageClick={handleImageClick}
+      />
+
+      {/* Global image lightbox */}
+      <ImageLightbox
+        images={lightboxImages}
+        currentIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onNavigate={setLightboxIndex}
       />
 
       {/* Gradient overlays for better text readability */}

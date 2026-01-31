@@ -100,6 +100,26 @@ export function useMemories() {
     }, []);
 
     /**
+     * Upload multiple images to Firebase Storage
+     * @param {File[]} files - Array of image files to upload
+     * @param {string} cityId - The city these images belong to
+     * @param {Function} onProgress - Optional callback for progress updates
+     * @returns {Promise<string[]>} - Array of download URLs
+     */
+    const uploadImages = useCallback(async (files, cityId, onProgress) => {
+        const urls = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const url = await uploadImage(file, cityId);
+            urls.push(url);
+            if (onProgress) {
+                onProgress(((i + 1) / files.length) * 100);
+            }
+        }
+        return urls;
+    }, [uploadImage]);
+
+    /**
      * Add a new memory to a city
      * @param {string} cityId - The city identifier
      * @param {Object} memory - { author, text, imageUrl }
@@ -151,6 +171,7 @@ export function useMemories() {
         addMemory,
         deleteMemory,
         uploadImage,
+        uploadImages,
         isLoading,
     };
 }
