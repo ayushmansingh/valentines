@@ -225,10 +225,8 @@ export default function StoryOverlay({
     }, [onChapterChange]);
 
     const handleIntroVisible = useCallback(() => {
-        if (chapters.length > 0) {
-            onChapterChange(chapters[0].id);
-        }
-    }, [chapters, onChapterChange]);
+        onChapterChange('intro');
+    }, [onChapterChange]);
 
     // The key insight: this div is NOT a scroll container
     // It just holds the sections, body handles scroll

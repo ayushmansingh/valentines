@@ -12,6 +12,9 @@ export const MAP_CONFIG = {
     defaultZoom: 4,
     defaultCenter: { lat: 35, lng: 40 },
 
+    // Intro view - zoomed out to show Europe & India
+    introView: { lat: 38, lng: 50, zoom: 3 },
+
     // Camera animation settings
     animation: {
         // Duration in milliseconds for camera transitions

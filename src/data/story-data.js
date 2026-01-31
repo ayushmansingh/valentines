@@ -137,8 +137,8 @@ export const chapters = [
  * Intro section configuration
  */
 export const introSection = {
-    title: "A Journey Across Continents",
-    subtitle: "Scroll to explore the story, or click markers on the map",
+    title: "Every love story is a journey across places, moments, and memories.",
+    subtitle: "This is ours.",
 };
 
 /**

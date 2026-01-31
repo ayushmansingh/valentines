@@ -103,10 +103,21 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
 
     // Handle chapter changes
     useEffect(() => {
-        if (!map || !activeChapter) return;
+        if (!map) return;
 
         // In explore mode, don't auto-navigate
         if (exploreMode) return;
+
+        // Handle intro view (when no chapter or 'intro')
+        if (!activeChapter || activeChapter === 'intro') {
+            if (currentChapterRef.current !== 'intro') {
+                currentChapterRef.current = 'intro';
+                map.setCenter({ lat: MAP_CONFIG.introView.lat, lng: MAP_CONFIG.introView.lng });
+                map.setZoom(MAP_CONFIG.introView.zoom);
+                onUpdateFlightLine(null);
+            }
+            return;
+        }
 
         const chapter = chapters.find((c) => c.id === activeChapter);
         if (!chapter) return;
@@ -117,15 +128,8 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
 
         const toLocation = chapter.location;
 
-        // First chapter - set immediately
-        if (!currentChapterRef.current || chapters.indexOf(chapter) === 0) {
-            map.setCenter({ lat: toLocation.lat, lng: toLocation.lng });
-            map.setZoom(toLocation.zoom);
-            onUpdateFlightLine(null); // No line for first jump
-        } else {
-            // Animate to new location
-            flyTo(toLocation, 2500); // Slightly slower for better line visualization
-        }
+        // Animate to new location
+        flyTo(toLocation, 2500);
     }, [activeChapter, chapters, map, flyTo, exploreMode, onUpdateFlightLine]);
 
     // Handle gesture mode changes

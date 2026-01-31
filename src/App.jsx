@@ -17,7 +17,7 @@ import { chapters } from "./data/story-data";
  */
 export default function App() {
   // Track the currently visible chapter
-  const [activeChapter, setActiveChapter] = useState(chapters[0]?.id || null);
+  const [activeChapter, setActiveChapter] = useState('intro');
 
   // Explore mode - enables free map interaction
   const [exploreMode, setExploreMode] = useState(false);
