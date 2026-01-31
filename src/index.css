@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+/* Custom Theme Configuration */
+@theme {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Custom colors */
+  --color-glass: rgba(255, 255, 255, 0.08);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
+}
+
+/* Base Styles */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Allow body scroll for snap scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar but keep functionality */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   STORY SECTIONS - Critical for map interaction
+   ============================================ */
+
+/* All sections: pointer-events-none to allow map clicks through */
+.story-section {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem 2rem 6rem 2rem;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  /* CRITICAL: Allow clicks to pass through to map */
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .story-section {
+    align-items: center;
+    padding: 2rem 4rem;
+  }
+}
+
+/* Intro section - default (mobile): centered/bottom */
+.story-section--intro {
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 4rem;
+  padding-top: 0;
+}
+
+/* Outro section - default (mobile): centered */
+.story-section--outro {
+  min-height: 70vh;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+}
+
+/* Desktop: Top-right positioning */
+@media (min-width: 768px) {
+  .story-section--intro {
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 6rem;
+    padding-bottom: 0;
+  }
+
+  .story-section--outro {
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 6rem;
+  }
+}
+
+/* Story cards: pointer-events-auto to be clickable */
+.story-card {
+  pointer-events: auto;
+  max-width: 24rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .story-card {
+    max-width: 28rem;
+  }
+}
+
+/* Intro/outro cards - wider */
+.story-card--intro,
+.story-card--outro {
+  max-width: 36rem;
+}
+
+/* Smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation for pulse */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
