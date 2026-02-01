@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import MapBackground from "./components/MapBackground";
 import StoryOverlay from "./components/StoryOverlay";
 import DetailModal from "./components/DetailModal";
 import TimelineView from "./components/TimelineView";
 import ImageLightbox from "./components/ImageLightbox";
-import { chapters } from "./data/story-data";
+import AddCityModal from "./components/AddCityModal";
+import { useCities } from "./hooks/useCities";
 
 /**
  * Main App Component
@@ -14,8 +15,25 @@ import { chapters } from "./data/story-data";
  * - Body handles scrolling (no overlay blocking map)
  * - Map is fixed, interactive
  * - Story cards positioned to side, don't block map center
+ * - Admin mode enabled via ?admin=true URL param
  */
 export default function App() {
+  // Check for admin mode via URL param
+  const isAdmin = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('admin') === 'true';
+  }, []);
+
+  // Use Firebase-backed cities hook
+  const { cities, isLoading, addCity, initializeFromStatic } = useCities();
+
+  // Initialize Firebase with static cities if empty (one-time migration)
+  useEffect(() => {
+    if (!isLoading && cities.length === 0) {
+      initializeFromStatic();
+    }
+  }, [isLoading, cities.length, initializeFromStatic]);
+
   // Track the currently visible chapter
   const [activeChapter, setActiveChapter] = useState('intro');
 
@@ -27,6 +45,9 @@ export default function App() {
 
   // Timeline view state
   const [timelineOpen, setTimelineOpen] = useState(false);
+
+  // Add city modal state
+  const [addCityOpen, setAddCityOpen] = useState(false);
 
   // Lightbox state (shared across components)
   const [lightboxImages, setLightboxImages] = useState([]);
@@ -45,18 +66,15 @@ export default function App() {
 
   // Handler for marker clicks - opens detail modal
   const handleMarkerClick = useCallback((chapterId) => {
-    console.log("[DEBUG] App.handleMarkerClick called with:", chapterId);
-    const chapter = chapters.find(c => c.id === chapterId);
+    const chapter = cities.find(c => c.id === chapterId);
     if (chapter) {
-      console.log("[DEBUG] Setting selectedLocation:", chapter.title);
       setSelectedLocation(chapter);
       setActiveChapter(chapterId);
     }
-  }, []);
+  }, [cities]);
 
   // Handler to enter explore mode
   const handleEnterExploreMode = useCallback(() => {
-    console.log("[DEBUG] handleEnterExploreMode called!");
     setExploreMode(true);
   }, []);
 
@@ -72,22 +90,49 @@ export default function App() {
     setLightboxOpen(true);
   }, []);
 
+  // Handler for adding a new city (admin only)
+  const handleAddCity = useCallback(async (city, position) => {
+    try {
+      await addCity(city, position);
+    } catch (error) {
+      console.error("Failed to add city:", error);
+    }
+  }, [addCity]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+        <div className="text-white font-sans text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Fixed full-screen map background - z-0, always interactive */}
       <MapBackground
         activeChapter={activeChapter}
-        chapters={chapters}
+        chapters={cities}
         exploreMode={exploreMode}
         onMarkerClick={handleMarkerClick}
-      />
+      >
+        {/* AddCityModal inside MapBackground to access APIProvider context */}
+        <AddCityModal
+          isOpen={addCityOpen}
+          onClose={() => setAddCityOpen(false)}
+          onAdd={handleAddCity}
+          existingCities={cities}
+        />
+      </MapBackground>
 
       {/* Scrollable story overlay - uses body scroll, cards don't block map */}
       <StoryOverlay
-        chapters={chapters}
+        chapters={cities}
         onChapterChange={handleChapterChange}
         onEnterExploreMode={handleEnterExploreMode}
         exploreMode={exploreMode}
+        isAdmin={isAdmin}
       />
 
       {/* Detail modal for marker clicks */}
@@ -118,6 +163,31 @@ export default function App() {
         <span className="sm:hidden">Timeline</span>
       </button>
 
+      {/* Admin: Add City button */}
+      {isAdmin && (
+        <button
+          onClick={() => setAddCityOpen(true)}
+          className="fixed bottom-4 right-4 md:bottom-6 md:right-24 z-40 
+                   px-3 py-2 md:px-4 md:py-3 rounded-xl
+                   bg-gradient-to-r from-emerald-500/80 to-teal-500/80 backdrop-blur-sm
+                   text-white font-sans text-xs md:text-sm font-medium
+                   border border-white/20 shadow-lg
+                   hover:from-emerald-500 hover:to-teal-500 
+                   hover:scale-105 active:scale-95 transition-all duration-200
+                   flex items-center gap-2"
+          style={{ marginBottom: "env(safe-area-inset-bottom, 0)" }}
+        >
+          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="hidden sm:inline">Add City</span>
+          <span className="sm:hidden">+</span>
+        </button>
+      )}
+
+
+
       {/* Timeline view */}
       <TimelineView
         isOpen={timelineOpen}
@@ -139,6 +209,15 @@ export default function App() {
         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
       </div>
+
+      {/* Admin mode indicator */}
+      {isAdmin && (
+        <div className="fixed top-4 left-4 z-50 px-3 py-1.5 rounded-full
+                      bg-amber-500/90 text-amber-900 text-xs font-sans font-semibold
+                      shadow-lg">
+          Admin Mode
+        </div>
+      )}
     </>
   );
 }

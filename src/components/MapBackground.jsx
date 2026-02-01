@@ -56,7 +56,7 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
     }, [map, onMapReady]);
 
     const flyTo = useCallback(
-        (toLocation, duration = 2000) => {
+        (toLocation, duration = 2000, skipLine = false) => {
             if (!map || isAnimatingRef.current) return;
             isAnimatingRef.current = true;
 
@@ -80,19 +80,18 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
                 map.setCenter({ lat, lng });
                 map.setZoom(zoom);
 
-                // Update flight line (draw from start to current position)
-                onUpdateFlightLine([
-                    { lat: startCenter.lat(), lng: startCenter.lng() },
-                    { lat, lng }
-                ]);
+                // Update flight line (draw from start to current position) - skip if coming from intro
+                if (!skipLine) {
+                    onUpdateFlightLine([
+                        { lat: startCenter.lat(), lng: startCenter.lng() },
+                        { lat, lng }
+                    ]);
+                }
 
                 if (progress < 1) {
                     requestAnimationFrame(tick);
                 } else {
                     isAnimatingRef.current = false;
-                    // Keep the full line visible? Or fade it out?
-                    // Let's keep it visible for a moment then maybe fade it out in a polish pass
-                    // For now, it stays as the "path traveled"
                 }
             }
 
@@ -124,12 +123,15 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
 
         // Skip if same chapter
         if (currentChapterRef.current === activeChapter) return;
+
+        // Check if coming from intro - don't draw line
+        const comingFromIntro = currentChapterRef.current === 'intro';
         currentChapterRef.current = activeChapter;
 
         const toLocation = chapter.location;
 
-        // Animate to new location
-        flyTo(toLocation, 2500);
+        // Animate to new location (skip line if coming from intro)
+        flyTo(toLocation, 2500, comingFromIntro);
     }, [activeChapter, chapters, map, flyTo, exploreMode, onUpdateFlightLine]);
 
     // Handle gesture mode changes
@@ -176,23 +178,26 @@ function MarkerPin({ title, isActive, onClick }) {
                     animate={{ scale: 2, opacity: 0 }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
                 >
-                    <div className="w-full h-full rounded-xl bg-white/30" />
+                    <div className="w-full h-full rounded-xl bg-cyan-400/40" />
                 </motion.div>
             )}
 
-            {/* Glassmorphism floating label */}
+            {/* Floating label with strong visibility */}
             <div
                 className={`
                     relative px-4 py-2.5 rounded-xl
-                    shadow-lg transition-all duration-300
+                    shadow-xl transition-all duration-300
                     ${isActive
-                        ? "bg-gradient-to-r from-sky-400/90 to-cyan-300/90 shadow-cyan-400/30"
-                        : "bg-white/15 border border-white/30 hover:bg-white/25"
+                        ? "bg-gradient-to-r from-sky-400 to-cyan-300 shadow-cyan-400/50"
+                        : "bg-slate-800/80 border border-white/20 hover:bg-slate-700/90"
                     }
                 `}
                 style={{
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
+                    boxShadow: isActive
+                        ? "0 8px 32px rgba(0, 200, 255, 0.3)"
+                        : "0 4px 20px rgba(0, 0, 0, 0.4)",
                 }}
             >
                 {/* City name */}
@@ -206,7 +211,7 @@ function MarkerPin({ title, isActive, onClick }) {
                     {title}
                 </span>
 
-                {/* Subtle location dot */}
+                {/* Location dot */}
                 <div
                     className={`
                         absolute -bottom-1.5 left-1/2 -translate-x-1/2
@@ -214,7 +219,7 @@ function MarkerPin({ title, isActive, onClick }) {
                         transition-all duration-300
                         ${isActive
                             ? "bg-cyan-500 shadow-lg shadow-cyan-500/50"
-                            : "bg-white/70"
+                            : "bg-white shadow-md"
                         }
                     `}
                 />
@@ -231,6 +236,7 @@ export default function MapBackground({
     chapters,
     exploreMode = false,
     onMarkerClick,
+    children,
 }) {
     const defaultCenter = chapters[0]?.location || MAP_CONFIG.defaultCenter;
     const [mapReady, setMapReady] = useState(false);
@@ -268,26 +274,39 @@ export default function MapBackground({
                         onUpdateFlightLine={handleUpdateFlightLine}
                     />
 
-                    {/* Halo Line Effect - Dark outer stroke */}
+                    {/* Flight Path - Bottom layer: Soft shadow */}
                     {flightPath && (
                         <Polyline
                             path={flightPath}
                             options={{
-                                strokeColor: "#1e293b",
-                                strokeOpacity: 0.8,
+                                strokeColor: "#000000",
+                                strokeOpacity: 0.3,
                                 strokeWeight: 6,
+                                zIndex: 1,
                             }}
                         />
                     )}
 
-                    {/* Halo Line Effect - Light inner stroke */}
+                    {/* Flight Path - Top layer: Dashed white line */}
                     {flightPath && (
                         <Polyline
                             path={flightPath}
                             options={{
                                 strokeColor: "#ffffff",
-                                strokeOpacity: 0.9,
-                                strokeWeight: 2,
+                                strokeOpacity: 0,  // Hide solid line, only show icons
+                                strokeWeight: 3,
+                                zIndex: 2,
+                                icons: [{
+                                    icon: {
+                                        path: 'M 0,-1 0,1',
+                                        strokeColor: '#ffffff',
+                                        strokeOpacity: 1,
+                                        strokeWeight: 3,
+                                        scale: 4,
+                                    },
+                                    offset: '0',
+                                    repeat: '20px',
+                                }],
                             }}
                         />
                     )}
@@ -311,6 +330,9 @@ export default function MapBackground({
                         </AdvancedMarker>
                     ))}
                 </Map>
+
+                {/* Children rendered inside APIProvider - for AddCityModal etc */}
+                {children}
             </APIProvider>
 
             {/* Explore mode indicator */}
