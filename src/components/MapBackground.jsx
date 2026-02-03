@@ -55,49 +55,191 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
         }
     }, [map, onMapReady]);
 
+    /**
+     * Generate a curved arc path between two points
+     * Uses a quadratic Bezier curve with elevated control point
+     */
+    const generateArcPath = useCallback((start, end, numPoints = 50) => {
+        const points = [];
+
+        // Calculate midpoint
+        const midLat = (start.lat + end.lat) / 2;
+        const midLng = (start.lng + end.lng) / 2;
+
+        // Calculate distance between points (rough approximation)
+        const distance = Math.sqrt(
+            Math.pow(end.lat - start.lat, 2) +
+            Math.pow(end.lng - start.lng, 2)
+        );
+
+        // Control point - offset perpendicular to the line
+        // The arc curves "up" (towards north for horizontal lines)
+        const arcHeight = distance * 0.3; // 30% of distance as arc height
+
+        // Calculate perpendicular offset direction
+        const dx = end.lng - start.lng;
+        const dy = end.lat - start.lat;
+        const length = Math.sqrt(dx * dx + dy * dy);
+
+        // Perpendicular unit vector (rotated 90 degrees)
+        const perpX = -dy / length;
+        const perpY = dx / length;
+
+        // Control point elevated above midpoint
+        const controlLat = midLat + perpY * arcHeight;
+        const controlLng = midLng + perpX * arcHeight;
+
+        // Generate quadratic Bezier curve points
+        for (let i = 0; i <= numPoints; i++) {
+            const t = i / numPoints;
+            const oneMinusT = 1 - t;
+
+            // Quadratic Bezier formula: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+            const lat = oneMinusT * oneMinusT * start.lat +
+                2 * oneMinusT * t * controlLat +
+                t * t * end.lat;
+            const lng = oneMinusT * oneMinusT * start.lng +
+                2 * oneMinusT * t * controlLng +
+                t * t * end.lng;
+
+            points.push({ lat, lng });
+        }
+
+        return points;
+    }, []);
+
+    /**
+     * Calculate zoom level to fit both points with padding
+     */
+    const calculateFitZoom = useCallback((start, end) => {
+        const latDiff = Math.abs(end.lat - start.lat);
+        const lngDiff = Math.abs(end.lng - start.lng);
+        const maxDiff = Math.max(latDiff, lngDiff);
+
+        // Approximate zoom levels for different distances
+        if (maxDiff > 60) return 2;   // Continental
+        if (maxDiff > 30) return 3;   // Large region
+        if (maxDiff > 15) return 4;   // Country
+        if (maxDiff > 8) return 5;    // Region
+        if (maxDiff > 4) return 6;    // State
+        if (maxDiff > 2) return 7;    // Metro area
+        if (maxDiff > 1) return 8;    // City
+        return 9;                      // Neighborhood
+    }, []);
+
+    /**
+     * Multi-phase fly animation:
+     * Phase 1: Zoom out to show both cities
+     * Phase 2: Draw curved arc while panning
+     * Phase 3: Zoom into destination
+     */
     const flyTo = useCallback(
-        (toLocation, duration = 2000, skipLine = false) => {
+        (toLocation, totalDuration = 3500, skipLine = false) => {
             if (!map || isAnimatingRef.current) return;
             isAnimatingRef.current = true;
 
             const startCenter = map.getCenter();
             const startZoom = map.getZoom();
-            const startTime = performance.now();
+            const startLat = startCenter.lat();
+            const startLng = startCenter.lng();
+
+            // Calculate midpoint between start and end
+            const midLat = (startLat + toLocation.lat) / 2;
+            const midLng = (startLng + toLocation.lng) / 2;
+
+            // Calculate zoom level to fit both points - zoom out MORE for long distances
+            let fitZoom = calculateFitZoom(
+                { lat: startLat, lng: startLng },
+                { lat: toLocation.lat, lng: toLocation.lng }
+            );
+            // Zoom out 1-2 levels more to ensure the whole arc is visible
+            fitZoom = Math.max(fitZoom - 1, 1);
+
+            // Generate the curved arc path
+            const arcPath = generateArcPath(
+                { lat: startLat, lng: startLng },
+                { lat: toLocation.lat, lng: toLocation.lng }
+            );
 
             // Clear previous line
             onUpdateFlightLine(null);
 
+            // Animation phases timing - longer middle phase for smoothness
+            const phase1Duration = totalDuration * 0.20;  // Zoom out
+            const phase2Duration = totalDuration * 0.60;  // Arc drawing (longer for smoothness)
+            const phase3Duration = totalDuration * 0.20;  // Zoom in
+
+            const startTime = performance.now();
+
             function tick(now) {
                 const elapsed = now - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const eased = easeInOutCubic(progress);
+                const totalProgress = Math.min(elapsed / totalDuration, 1);
 
-                const lat = startCenter.lat() + (toLocation.lat - startCenter.lat()) * eased;
-                const lng = startCenter.lng() + (toLocation.lng - startCenter.lng()) * eased;
-                const zoom = startZoom + (toLocation.zoom - startZoom) * eased;
+                let lat, lng, zoom;
+                let arcProgress = 0;
+
+                if (elapsed < phase1Duration) {
+                    // Phase 1: Zoom out and move towards midpoint
+                    const phaseProgress = elapsed / phase1Duration;
+                    const eased = easeInOutCubic(phaseProgress);
+
+                    // Move camera towards the midpoint of the arc
+                    lat = startLat + (midLat - startLat) * eased;
+                    lng = startLng + (midLng - startLng) * eased;
+                    zoom = startZoom + (fitZoom - startZoom) * eased;
+                    arcProgress = 0;
+
+                } else if (elapsed < phase1Duration + phase2Duration) {
+                    // Phase 2: Stay centered on midpoint while arc draws
+                    const phaseElapsed = elapsed - phase1Duration;
+                    const phaseProgress = phaseElapsed / phase2Duration;
+                    const eased = easeInOutCubic(phaseProgress);
+
+                    // Camera stays at midpoint - this keeps the whole arc visible
+                    lat = midLat;
+                    lng = midLng;
+                    zoom = fitZoom;
+
+                    // Arc draws progressively
+                    arcProgress = eased;
+
+                } else {
+                    // Phase 3: Move from midpoint to destination and zoom in
+                    const phaseElapsed = elapsed - phase1Duration - phase2Duration;
+                    const phaseProgress = phaseElapsed / phase3Duration;
+                    const eased = easeInOutCubic(phaseProgress);
+
+                    // Move from midpoint to destination
+                    lat = midLat + (toLocation.lat - midLat) * eased;
+                    lng = midLng + (toLocation.lng - midLng) * eased;
+                    zoom = fitZoom + (toLocation.zoom - fitZoom) * eased;
+                    arcProgress = 1;
+                }
 
                 // Update map view
                 map.setCenter({ lat, lng });
                 map.setZoom(zoom);
 
-                // Update flight line (draw from start to current position) - skip if coming from intro
-                if (!skipLine) {
-                    onUpdateFlightLine([
-                        { lat: startCenter.lat(), lng: startCenter.lng() },
-                        { lat, lng }
-                    ]);
+                // Update flight line - progressively reveal arc
+                if (!skipLine && arcProgress > 0) {
+                    const visiblePoints = Math.ceil(arcProgress * arcPath.length);
+                    onUpdateFlightLine(arcPath.slice(0, visiblePoints));
                 }
 
-                if (progress < 1) {
+                if (totalProgress < 1) {
                     requestAnimationFrame(tick);
                 } else {
                     isAnimatingRef.current = false;
+                    // Keep full arc visible
+                    if (!skipLine) {
+                        onUpdateFlightLine(arcPath);
+                    }
                 }
             }
 
             requestAnimationFrame(tick);
         },
-        [map, onUpdateFlightLine]
+        [map, onUpdateFlightLine, generateArcPath, calculateFitZoom]
     );
 
     // Handle chapter changes
@@ -131,7 +273,7 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
         const toLocation = chapter.location;
 
         // Animate to new location (skip line if coming from intro)
-        flyTo(toLocation, 2500, comingFromIntro);
+        flyTo(toLocation, 3500, comingFromIntro);
     }, [activeChapter, chapters, map, flyTo, exploreMode, onUpdateFlightLine]);
 
     // Handle gesture mode changes
