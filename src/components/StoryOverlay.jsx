@@ -1,13 +1,17 @@
 import { useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { introSection, outroSection } from "../data/story-data";
+import { useMemories } from "../hooks/useMemories";
 
 /**
  * Individual story section for scroll-snap
  * Uses pointer-events-none so map is clickable through empty areas
  */
-function StorySection({ chapter, index, onVisible }) {
+function StorySection({ chapter, index, onVisible, dynamicSubtitle }) {
     const sectionRef = useRef(null);
+
+    // Use dynamic subtitle from Firebase if available, else fall back to static
+    const displaySubtitle = dynamicSubtitle || chapter.subtitle;
 
     useEffect(() => {
         const section = sectionRef.current;
@@ -68,10 +72,10 @@ function StorySection({ chapter, index, onVisible }) {
                         {chapter.title}
                     </h2>
 
-                    {/* Subtitle */}
-                    {chapter.subtitle && (
+                    {/* Subtitle - Dynamic from Firebase */}
+                    {displaySubtitle && (
                         <p className="font-serif italic text-base text-slate-600 mb-3">
-                            {chapter.subtitle}
+                            {displaySubtitle}
                         </p>
                     )}
 
@@ -218,6 +222,9 @@ export default function StoryOverlay({
     onEnterExploreMode,
     exploreMode
 }) {
+    // Get dynamic subtitles from Firebase
+    const { getCitySubtitle } = useMemories();
+
     const handleVisible = useCallback((chapterId) => {
         if (chapterId) {
             onChapterChange(chapterId);
@@ -243,6 +250,7 @@ export default function StoryOverlay({
                     chapter={chapter}
                     index={index}
                     onVisible={handleVisible}
+                    dynamicSubtitle={getCitySubtitle(chapter.id)}
                 />
             ))}
 

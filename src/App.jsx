@@ -148,7 +148,7 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="text-4xl md:text-6xl font-bold mb-4 tracking-tighter"
             >
-              Start Journey
+              Start Our Journey?
             </motion.h1>
             <motion.p
               initial={{ opacity: 0 }}

@@ -34,14 +34,13 @@ export default function PhotoPipPreview({ photo, mousePos }) {
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            initial={{ opacity: 0, scale: 0.85, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 5 }}
+            exit={{ opacity: 0, scale: 0.9, y: 4 }}
             transition={{
-                type: "spring",
-                stiffness: 500,
-                damping: 30,
-                duration: 0.2
+                type: "tween",
+                duration: 0.15,
+                ease: "easeOut"
             }}
             style={previewStyle}
         >
@@ -97,8 +96,8 @@ export default function PhotoPipPreview({ photo, mousePos }) {
                         {/* GPS Indicator */}
                         <span
                             className={`text-xs font-sans ${photo.hasGps
-                                    ? 'text-cyan-400'
-                                    : 'text-amber-400'
+                                ? 'text-cyan-400'
+                                : 'text-amber-400'
                                 }`}
                         >
                             {photo.hasGps ? '📍 GPS' : '📍 ~Approx'}

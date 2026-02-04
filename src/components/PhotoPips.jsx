@@ -8,14 +8,14 @@ import PhotoPipPreview from "./PhotoPipPreview";
  * Distributes pips in a ring around the city center
  * @param {number} index - Index of the pip
  * @param {number} total - Total number of pips
- * @param {number} radius - Base radius in degrees (~0.002 = ~200m)
+ * @param {number} radius - Base radius in degrees (~0.018 = ~2km)
  */
-function getRadialOffset(index, total, radius = 0.0015) {
+function getRadialOffset(index, total, radius = 0.018) {
     // Golden angle for nice distribution
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const angle = index * goldenAngle;
 
-    // Vary the radius slightly for organic look
+    // Vary the radius slightly for organic look (0.7 to 1.3x)
     const r = radius * (0.7 + Math.random() * 0.6);
 
     return {
