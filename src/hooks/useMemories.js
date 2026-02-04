@@ -120,6 +120,51 @@ export function useMemories() {
     }, [uploadImage]);
 
     /**
+     * Upload multiple images WITH GPS extraction
+     * @param {File[]} files - Array of image files to upload
+     * @param {string} cityId - The city these images belong to
+     * @param {{lat: number, lng: number}} cityLocation - City center for fallback
+     * @param {Function} onProgress - Optional callback for progress updates
+     * @returns {Promise<Array<{url: string, lat: number, lng: number, timestamp: string|null, hasGps: boolean}>>}
+     */
+    const uploadImagesWithGps = useCallback(async (files, cityId, cityLocation, onProgress) => {
+        // Dynamic import to avoid loading exifr unless needed
+        const { processFilesForGps } = await import('../utils/exifExtractor');
+
+        // Step 1: Extract GPS from all files
+        if (onProgress) onProgress(5);
+        const processedFiles = await processFilesForGps(
+            files,
+            cityLocation?.lat || 0,
+            cityLocation?.lng || 0
+        );
+
+        // Step 2: Upload each file and build photo metadata
+        const photos = [];
+        for (let i = 0; i < processedFiles.length; i++) {
+            const { file, lat, lng, timestamp, hasGps } = processedFiles[i];
+
+            // Upload file
+            const url = await uploadImage(file, cityId);
+
+            photos.push({
+                url,
+                lat,
+                lng,
+                timestamp,
+                hasGps
+            });
+
+            if (onProgress) {
+                // 5% for GPS extraction, 95% for uploads
+                onProgress(5 + ((i + 1) / processedFiles.length) * 95);
+            }
+        }
+
+        return photos;
+    }, [uploadImage]);
+
+    /**
      * Add a new memory to a city
      * @param {string} cityId - The city identifier
      * @param {Object} memory - { author, text, imageUrl }
@@ -172,6 +217,7 @@ export function useMemories() {
         deleteMemory,
         uploadImage,
         uploadImages,
+        uploadImagesWithGps,
         isLoading,
     };
 }

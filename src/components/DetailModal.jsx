@@ -23,7 +23,7 @@ export default function DetailModal({ chapter, isOpen, onClose }) {
         updateCitySubtitle,
         addMemory,
         deleteMemory,
-        uploadImages,
+        uploadImagesWithGps,
         isLoading
     } = useMemories();
 
@@ -235,8 +235,9 @@ export default function DetailModal({ chapter, isOpen, onClose }) {
                                                     <MemoryForm
                                                         onSubmit={handleAddMemory}
                                                         onCancel={() => setShowForm(false)}
-                                                        onUploadImages={uploadImages}
+                                                        onUploadImagesWithGps={uploadImagesWithGps}
                                                         cityId={chapter.id}
+                                                        cityLocation={chapter.location}
                                                     />
                                                 </div>
                                             )}

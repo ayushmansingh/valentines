@@ -1,8 +1,10 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { APIProvider, Map, useMap, AdvancedMarker, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { GOOGLE_MAPS_API_KEY, MAP_CONFIG } from "../config";
 import mapStyle from "../styles/map-style.json";
 import { motion } from "framer-motion";
+import PhotoPips from "./PhotoPips";
+import { useMemories } from "../hooks/useMemories";
 
 /**
  * Easing function for smooth animations
@@ -43,7 +45,7 @@ const Polyline = ({ path, options }) => {
     return null;
 };
 
-function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpdateFlightLine }) {
+function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpdateFlightLine, hasPhotos }) {
     const map = useMap();
     const currentChapterRef = useRef(null);
     const isAnimatingRef = useRef(false);
@@ -272,9 +274,16 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
 
         const toLocation = chapter.location;
 
+        // Auto-zoom: increase zoom by 1 if chapter has photos for better pip visibility
+        const zoomBoost = hasPhotos ? 1 : 0;
+        const adjustedLocation = {
+            ...toLocation,
+            zoom: (toLocation.zoom || 12) + zoomBoost
+        };
+
         // Animate to new location (skip line if coming from intro)
-        flyTo(toLocation, 3500, comingFromIntro);
-    }, [activeChapter, chapters, map, flyTo, exploreMode, onUpdateFlightLine]);
+        flyTo(adjustedLocation, 3500, comingFromIntro);
+    }, [activeChapter, chapters, map, flyTo, exploreMode, onUpdateFlightLine, hasPhotos]);
 
     // Handle gesture mode changes
     useEffect(() => {
@@ -297,8 +306,9 @@ function MapController({ activeChapter, chapters, exploreMode, onMapReady, onUpd
 
 /**
  * Custom marker pin component - Glassmorphism floating label design
+ * Now supports fading when photo pips are visible
  */
-function MarkerPin({ title, isActive, onClick }) {
+function MarkerPin({ title, isActive, hasPips, onClick, onHoverChange }) {
     return (
         <motion.div
             initial={{ scale: 0, opacity: 0 }}
@@ -309,6 +319,8 @@ function MarkerPin({ title, isActive, onClick }) {
                 e.stopPropagation();
                 onClick();
             }}
+            onMouseEnter={() => onHoverChange && onHoverChange(true)}
+            onMouseLeave={() => onHoverChange && onHoverChange(false)}
             className="cursor-pointer relative"
             style={{ transform: "translateY(-50%)" }}
         >
@@ -378,11 +390,35 @@ export default function MapBackground({
     chapters,
     exploreMode = false,
     onMarkerClick,
+    onPipHover,
+    isChapterHovered,
     children,
 }) {
     const defaultCenter = chapters[0]?.location || MAP_CONFIG.defaultCenter;
     const [mapReady, setMapReady] = useState(false);
     const [flightPath, setFlightPath] = useState(null);
+    const [markerHovered, setMarkerHovered] = useState(false);
+
+    // Get memories for photo pips
+    const { getMemoriesForCity } = useMemories();
+
+    // Get photos for the active chapter
+    const activeChapterPhotos = useMemo(() => {
+        if (!activeChapter || activeChapter === 'intro') return [];
+
+        const memories = getMemoriesForCity(activeChapter);
+        const photos = [];
+
+        // Flatten all photos from all memories
+        memories.forEach(memory => {
+            if (memory.photos && Array.isArray(memory.photos)) {
+                photos.push(...memory.photos);
+            }
+            // Also support legacy imageUrls without GPS (won't show on map but handle gracefully)
+        });
+
+        return photos;
+    }, [activeChapter, getMemoriesForCity]);
 
     const handleMapReady = useCallback(() => {
         setMapReady(true);
@@ -414,6 +450,7 @@ export default function MapBackground({
                         exploreMode={exploreMode}
                         onMapReady={handleMapReady}
                         onUpdateFlightLine={handleUpdateFlightLine}
+                        hasPhotos={activeChapterPhotos.length > 0}
                     />
 
                     {/* Flight Path - Bottom layer: Soft shadow */}
@@ -467,10 +504,20 @@ export default function MapBackground({
                             <MarkerPin
                                 title={chapter.title}
                                 isActive={activeChapter === chapter.id}
+                                hasPips={activeChapter === chapter.id && activeChapterPhotos.length > 0}
                                 onClick={() => onMarkerClick(chapter.id)}
+                                onHoverChange={activeChapter === chapter.id ? setMarkerHovered : undefined}
                             />
                         </AdvancedMarker>
                     ))}
+
+                    {/* Photo Pips for active chapter */}
+                    <PhotoPips
+                        photos={activeChapterPhotos}
+                        isActive={activeChapter && activeChapter !== 'intro'}
+                        isChapterHovered={isChapterHovered || markerHovered}
+                        onPipHover={onPipHover}
+                    />
                 </Map>
 
                 {/* Children rendered inside APIProvider - for AddCityModal etc */}

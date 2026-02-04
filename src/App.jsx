@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import MapBackground from "./components/MapBackground";
 import StoryOverlay from "./components/StoryOverlay";
 import DetailModal from "./components/DetailModal";
@@ -7,6 +8,7 @@ import ImageLightbox from "./components/ImageLightbox";
 import AddCityModal from "./components/AddCityModal";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import { useCities } from "./hooks/useCities";
+import { useAudioLayer } from "./hooks/useAudioLayer";
 
 /**
  * Main App Component
@@ -55,6 +57,9 @@ export default function App() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  // Audio Layer
+  const { initAudio, isReady, isMuted, toggleMute, currentTrack } = useAudioLayer(activeChapter);
+
   // Handler for when a chapter comes into view via scroll
   // Also exits explore mode when scrolling back
   const handleChapterChange = useCallback((chapterId) => {
@@ -100,11 +105,11 @@ export default function App() {
     }
   }, [addCity]);
 
-  // Show loading state
+  // Loading state
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
-        <div className="text-white font-sans text-lg">Loading...</div>
+      <div className="fixed inset-0 bg-black flex items-center justify-center text-white z-50">
+        <div className="animate-pulse">Loading journey...</div>
       </div>
     );
   }
@@ -122,13 +127,52 @@ export default function App() {
         <AddCityModal
           isOpen={addCityOpen}
           onClose={() => setAddCityOpen(false)}
-          onAdd={handleAddCity}
+          onAddCity={handleAddCity}
           existingCities={cities}
         />
       </MapBackground>
 
+      {/* Enter Journey Overlay */}
+      <AnimatePresence>
+        {!isReady && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="fixed inset-0 z-[100] bg-black text-white flex flex-col items-center justify-center cursor-pointer"
+            onClick={initAudio}
+          >
+            <motion.h1
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-4xl md:text-6xl font-bold mb-4 tracking-tighter"
+            >
+              Start Journey
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-white/50 text-sm uppercase tracking-widest"
+            >
+              Click anywhere to begin
+            </motion.p>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4, type: "spring" }}
+              className="mt-8 w-16 h-16 rounded-full border border-white/20 flex items-center justify-center"
+            >
+              ▶
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Scrollable story overlay - uses body scroll, cards don't block map */}
       <StoryOverlay
+        activeChapter={activeChapter}
         chapters={cities}
         onChapterChange={handleChapterChange}
         onEnterExploreMode={handleEnterExploreMode}
@@ -137,16 +181,18 @@ export default function App() {
       />
 
       {/* Detail modal for marker clicks */}
-      <DetailModal
-        chapter={selectedLocation}
-        isOpen={!!selectedLocation}
-        onClose={handleCloseModal}
-      />
+      {selectedLocation && (
+        <DetailModal
+          chapter={selectedLocation}
+          isOpen={!!selectedLocation}
+          onClose={handleCloseModal}
+        />
+      )}
 
       {/* Timeline button - fixed in corner, mobile-safe positioning */}
       <button
         onClick={() => setTimelineOpen(true)}
-        className="fixed bottom-4 left-4 md:bottom-6 md:right-6 md:left-auto z-40 
+        className="fixed bottom-4 left-4 md:bottom-6 md:left-6 z-40 
                  px-3 py-2 md:px-4 md:py-3 rounded-xl
                  bg-gradient-to-r from-rose-500/80 to-violet-500/80 backdrop-blur-sm
                  text-white font-sans text-xs md:text-sm font-medium
@@ -193,13 +239,39 @@ export default function App() {
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
       </div>
 
-      {/* Admin mode indicator */}
-      {isAdmin && (
-        <div className="fixed top-4 left-4 z-50 px-3 py-1.5 rounded-full
-                      bg-amber-500/90 text-amber-900 text-xs font-sans font-semibold
-                      shadow-lg">
-          Admin Mode
-        </div>
+
+
+      {/* Audio Controls */}
+      {isReady && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-4 left-4 z-50 flex items-center gap-3"
+        >
+          <button
+            onClick={toggleMute}
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+          >
+            {isMuted ? "🔇" : "🔊"}
+          </button>
+
+          <AnimatePresence mode="wait">
+            {currentTrack && !isMuted && (
+              <motion.div
+                key={currentTrack.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="bg-black/40 backdrop-blur-md px-3 py-2 rounded-full border border-white/10 flex items-center gap-2"
+              >
+                <span className="text-cyan-400 text-xs">Now Playing:</span>
+                <span className="text-white text-xs font-medium max-w-[150px] truncate">
+                  {currentTrack.title}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       )}
     </>
   );

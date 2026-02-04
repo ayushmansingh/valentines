@@ -6,8 +6,9 @@ const MAX_IMAGES = 3;
 /**
  * Memory Form Component
  * Form to add a new memory with multiple image uploads (max 3)
+ * Now extracts GPS coordinates from photos
  */
-export default function MemoryForm({ onSubmit, onCancel, onUploadImages, cityId }) {
+export default function MemoryForm({ onSubmit, onCancel, onUploadImagesWithGps, cityId, cityLocation }) {
     const [author, setAuthor] = useState("Ayushman");
     const [text, setText] = useState("");
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -61,24 +62,33 @@ export default function MemoryForm({ onSubmit, onCancel, onUploadImages, cityId 
         if (!text.trim()) return;
 
         setIsUploading(true);
-        setUploadProgress(10);
+        setUploadProgress(5);
 
         try {
-            let imageUrls = [];
+            let photos = [];
 
-            // Upload images if selected
+            // Upload images with GPS extraction
             if (selectedFiles.length > 0) {
-                imageUrls = await onUploadImages(selectedFiles, cityId, (progress) => {
-                    setUploadProgress(10 + progress * 0.7); // 10-80%
-                });
+                photos = await onUploadImagesWithGps(
+                    selectedFiles,
+                    cityId,
+                    cityLocation,
+                    (progress) => {
+                        setUploadProgress(progress);
+                    }
+                );
             }
 
-            setUploadProgress(90);
+            setUploadProgress(95);
 
+            // Submit memory with photos array (includes GPS data)
             await onSubmit({
                 author,
                 text: text.trim(),
-                imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+                // Keep imageUrls for backward compatibility
+                imageUrls: photos.length > 0 ? photos.map(p => p.url) : undefined,
+                // New photos array with GPS metadata
+                photos: photos.length > 0 ? photos : undefined,
             });
 
             setUploadProgress(100);
