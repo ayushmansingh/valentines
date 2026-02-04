@@ -125,9 +125,6 @@ export function useCities() {
         await setDoc(docRef, { items: updatedCities });
     }, [cities]);
 
-    /**
-     * Initialize Firebase with static cities (migration)
-     */
     const initializeFromStatic = useCallback(async () => {
         const docRef = doc(db, "cities", "list");
         const docSnap = await getDoc(docRef);
@@ -143,6 +140,28 @@ export function useCities() {
         return false;
     }, []);
 
+    /**
+     * Efficiently update the order of all cities (for Drag & Drop)
+     * @param {Array} newCitiesArr - The reordered array of cities
+     */
+    const reorderCities = useCallback(async (newCitiesArr) => {
+        const docRef = doc(db, "cities", "list");
+
+        // Recalculate order index for every item
+        const updatedCities = newCitiesArr.map((c, idx) => ({
+            ...c,
+            order: idx,
+        }));
+
+        // Optimistic update locally? 
+        // We rely on the hook's local state update from Firestore listener usually,
+        // but for smooth DnD we might want to update local state too if we passed it back?
+        // Actually, Reorder component controls local state, then we save.
+        setCities(updatedCities); // Update local mostly to prevent flicker
+
+        await setDoc(docRef, { items: updatedCities });
+    }, []);
+
     return {
         cities,
         isLoading,
@@ -151,6 +170,7 @@ export function useCities() {
         removeCity,
         updateCity,
         moveCity,
+        reorderCities,
         initializeFromStatic,
     };
 }

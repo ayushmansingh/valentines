@@ -5,6 +5,7 @@ import DetailModal from "./components/DetailModal";
 import TimelineView from "./components/TimelineView";
 import ImageLightbox from "./components/ImageLightbox";
 import AddCityModal from "./components/AddCityModal";
+import AdminDashboard from "./components/admin/AdminDashboard";
 import { useCities } from "./hooks/useCities";
 
 /**
@@ -163,27 +164,9 @@ export default function App() {
         <span className="sm:hidden">Timeline</span>
       </button>
 
-      {/* Admin: Add City button */}
+      {/* Admin: Dashboard */}
       {isAdmin && (
-        <button
-          onClick={() => setAddCityOpen(true)}
-          className="fixed bottom-4 right-4 md:bottom-6 md:right-24 z-40 
-                   px-3 py-2 md:px-4 md:py-3 rounded-xl
-                   bg-gradient-to-r from-emerald-500/80 to-teal-500/80 backdrop-blur-sm
-                   text-white font-sans text-xs md:text-sm font-medium
-                   border border-white/20 shadow-lg
-                   hover:from-emerald-500 hover:to-teal-500 
-                   hover:scale-105 active:scale-95 transition-all duration-200
-                   flex items-center gap-2"
-          style={{ marginBottom: "env(safe-area-inset-bottom, 0)" }}
-        >
-          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="hidden sm:inline">Add City</span>
-          <span className="sm:hidden">+</span>
-        </button>
+        <AdminDashboard onAddCity={() => setAddCityOpen(true)} />
       )}
 
 
