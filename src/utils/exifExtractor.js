@@ -72,12 +72,12 @@ export function generateClusteredLocation(cityLat, cityLng, existingPhotos = [])
         const reference = photosWithGps[Math.floor(Math.random() * photosWithGps.length)];
         baseLat = reference.lat;
         baseLng = reference.lng;
-        radius = 0.005; // ~500 meters near existing photos
+        radius = 0.005; // ~500m near existing photos
     } else {
-        // Fall back to city center - 750m spread
+        // Fall back to city center
         baseLat = cityLat;
         baseLng = cityLng;
-        radius = 0.007; // ~750m as requested
+        radius = 0.009; // ~1km from city center
     }
 
     // Generate random offset within radius (circular distribution)

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import { motion, AnimatePresence } from "framer-motion";
 import PhotoPipPreview from "./PhotoPipPreview";
@@ -8,9 +8,9 @@ import PhotoPipPreview from "./PhotoPipPreview";
  * Only used for fallback locations
  * @param {number} index - Index of the pip
  * @param {number} total - Total number of pips without GPS
- * @param {number} radius - Base radius in degrees (~0.007 = ~750m)
+ * @param {number} radius - Base radius in degrees (~0.0015 = ~165m)
  */
-function getRadialOffset(index, total, radius = 0.007) {
+function getRadialOffset(index, total, radius = 0.0015) {
     // Golden angle for nice distribution
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const angle = index * goldenAngle;
@@ -38,6 +38,20 @@ export default function PhotoPips({
 }) {
     const [hoveredPip, setHoveredPip] = useState(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+    // Preload images when city becomes active
+    useEffect(() => {
+        if (!isActive || photos.length === 0) return;
+
+        console.log(`🖼️ Preloading ${photos.length} images...`);
+
+        photos.forEach(photo => {
+            if (photo.url) {
+                const img = new Image();
+                img.src = photo.url;
+            }
+        });
+    }, [isActive, photos]);
 
     // Handle pip hover with magnetic effect
     const handlePipHover = useCallback((photo, e) => {
