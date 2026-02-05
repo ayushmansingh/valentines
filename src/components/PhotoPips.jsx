@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import PhotoPipPreview from "./PhotoPipPreview";
 
 /**
- * Generate radial scatter offset for constellation effect
- * Distributes pips in a ring around the city center
+ * Generate radial scatter offset for photos WITHOUT GPS
+ * Only used for fallback locations
  * @param {number} index - Index of the pip
- * @param {number} total - Total number of pips
- * @param {number} radius - Base radius in degrees (~0.018 = ~2km)
+ * @param {number} total - Total number of pips without GPS
+ * @param {number} radius - Base radius in degrees (~0.007 = ~750m)
  */
-function getRadialOffset(index, total, radius = 0.018) {
+function getRadialOffset(index, total, radius = 0.007) {
     // Golden angle for nice distribution
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const angle = index * goldenAngle;
@@ -51,19 +51,31 @@ export default function PhotoPips({
         if (onPipHover) onPipHover(null);
     }, [onPipHover]);
 
-    // Filter photos with valid coordinates and apply radial scatter
+    // Filter photos with valid coordinates
+    // Apply radial scatter ONLY to photos without GPS
     const scatteredPhotos = useMemo(() => {
         const valid = photos.filter(p => p.lat && p.lng);
+        const noGpsPhotos = valid.filter(p => !p.hasGps);
+        let noGpsIndex = 0;
 
-        return valid.map((photo, index) => {
-            // Apply radial scatter offset for constellation effect
-            const { latOffset, lngOffset } = getRadialOffset(index, valid.length);
-
-            return {
-                ...photo,
-                displayLat: photo.lat + latOffset,
-                displayLng: photo.lng + lngOffset,
-            };
+        return valid.map((photo) => {
+            if (photo.hasGps) {
+                // Use original GPS location
+                return {
+                    ...photo,
+                    displayLat: photo.lat,
+                    displayLng: photo.lng,
+                };
+            } else {
+                // Apply radial scatter for unknown locations
+                const { latOffset, lngOffset } = getRadialOffset(noGpsIndex, noGpsPhotos.length);
+                noGpsIndex++;
+                return {
+                    ...photo,
+                    displayLat: photo.lat + latOffset,
+                    displayLng: photo.lng + lngOffset,
+                };
+            }
         });
     }, [photos]);
 

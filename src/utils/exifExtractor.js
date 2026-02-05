@@ -74,10 +74,10 @@ export function generateClusteredLocation(cityLat, cityLng, existingPhotos = [])
         baseLng = reference.lng;
         radius = 0.005; // ~500 meters near existing photos
     } else {
-        // Fall back to city center - wider spread
+        // Fall back to city center - 750m spread
         baseLat = cityLat;
         baseLng = cityLng;
-        radius = 0.018; // ~2km as requested
+        radius = 0.007; // ~750m as requested
     }
 
     // Generate random offset within radius (circular distribution)
