@@ -67,31 +67,50 @@ export default function PhotoPips({
 
     // Filter photos with valid coordinates
     // Apply radial scatter ONLY to photos without GPS
+    // Ensure minimum distance from city center (1.5km = ~0.014 degrees)
+    const MIN_DISTANCE_FROM_CENTER = 0.014;
+
     const scatteredPhotos = useMemo(() => {
         const valid = photos.filter(p => p.lat && p.lng);
         const noGpsPhotos = valid.filter(p => !p.hasGps);
         let noGpsIndex = 0;
 
         return valid.map((photo) => {
+            let displayLat, displayLng;
+
             if (photo.hasGps) {
                 // Use original GPS location
-                return {
-                    ...photo,
-                    displayLat: photo.lat,
-                    displayLng: photo.lng,
-                };
+                displayLat = photo.lat;
+                displayLng = photo.lng;
             } else {
                 // Apply radial scatter for unknown locations
                 const { latOffset, lngOffset } = getRadialOffset(noGpsIndex, noGpsPhotos.length);
                 noGpsIndex++;
-                return {
-                    ...photo,
-                    displayLat: photo.lat + latOffset,
-                    displayLng: photo.lng + lngOffset,
-                };
+                displayLat = photo.lat + latOffset;
+                displayLng = photo.lng + lngOffset;
             }
+
+            // Enforce minimum distance from city center
+            if (cityCenter) {
+                const distLat = displayLat - cityCenter.lat;
+                const distLng = displayLng - cityCenter.lng;
+                const distance = Math.sqrt(distLat * distLat + distLng * distLng);
+
+                if (distance < MIN_DISTANCE_FROM_CENTER) {
+                    // Push the dot outward to minimum distance
+                    const angle = Math.atan2(distLng, distLat) || (Math.random() * 2 * Math.PI);
+                    displayLat = cityCenter.lat + MIN_DISTANCE_FROM_CENTER * Math.cos(angle);
+                    displayLng = cityCenter.lng + MIN_DISTANCE_FROM_CENTER * Math.sin(angle);
+                }
+            }
+
+            return {
+                ...photo,
+                displayLat,
+                displayLng,
+            };
         });
-    }, [photos]);
+    }, [photos, cityCenter]);
 
     if (!isActive || scatteredPhotos.length === 0) return null;
 
@@ -125,32 +144,15 @@ export default function PhotoPips({
  * Individual Glow Pip Marker
  */
 function GlowPip({ photo, isHovered, isChapterHovered, onHover, onLeave }) {
-    const [isNear, setIsNear] = useState(false);
-
-    // Magnetic hover - detect when cursor is within 20px
-    const handleMouseMove = useCallback((e) => {
-        const element = e.currentTarget;
-        const rect = element.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const distance = Math.sqrt(
-            Math.pow(e.clientX - centerX, 2) +
-            Math.pow(e.clientY - centerY, 2)
-        );
-        setIsNear(distance < 20);
-    }, []);
-
     // Determine visual state - BRIGHT pips
     const getOpacity = () => {
         if (isHovered) return 1;
-        if (isNear) return 1;
         if (isChapterHovered) return 1; // Full brightness on marker hover
         return 0.7; // Default state - still visible
     };
 
     const getScale = () => {
         if (isHovered) return 1.8;
-        if (isNear) return 1.5;
         return 1;
     };
 
@@ -176,17 +178,13 @@ function GlowPip({ photo, isHovered, isChapterHovered, onHover, onLeave }) {
                     stiffness: 400,
                     damping: 25
                 }}
-                onMouseMove={handleMouseMove}
                 onMouseEnter={(e) => onHover(photo, e)}
-                onMouseLeave={() => {
-                    setIsNear(false);
-                    onLeave();
-                }}
+                onMouseLeave={() => onLeave()}
                 className="relative cursor-pointer"
                 style={{
-                    // Expand click target for magnetic hover
-                    padding: '14px',
-                    margin: '-14px',
+                    // Smaller hit area for more precise hover detection
+                    padding: '8px',
+                    margin: '-8px',
                 }}
             >
                 {/* Outer Glow */}

@@ -420,6 +420,13 @@ export default function MapBackground({
         return photos;
     }, [activeChapter, getMemoriesForCity]);
 
+    // Get the active chapter's location for pip positioning
+    const activeChapterLocation = useMemo(() => {
+        if (!activeChapter || activeChapter === 'intro') return null;
+        const chapter = chapters.find(c => c.id === activeChapter);
+        return chapter?.location || null;
+    }, [activeChapter, chapters]);
+
     const handleMapReady = useCallback(() => {
         setMapReady(true);
     }, []);
@@ -517,6 +524,7 @@ export default function MapBackground({
                         isActive={activeChapter && activeChapter !== 'intro'}
                         isChapterHovered={isChapterHovered || markerHovered}
                         onPipHover={onPipHover}
+                        cityCenter={activeChapterLocation}
                     />
                 </Map>
 
