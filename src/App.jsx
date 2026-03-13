@@ -7,6 +7,7 @@ import TimelineView from "./components/TimelineView";
 import ImageLightbox from "./components/ImageLightbox";
 import AddCityModal from "./components/AddCityModal";
 import AdminDashboard from "./components/admin/AdminDashboard";
+import PasswordGate from "./components/PasswordGate";
 import { useCities } from "./hooks/useCities";
 import { useAudioLayer } from "./hooks/useAudioLayer";
 
@@ -115,7 +116,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <PasswordGate>
       {/* Fixed full-screen map background - z-0, always interactive */}
       <MapBackground
         activeChapter={activeChapter}
@@ -273,6 +274,6 @@ export default function App() {
           </AnimatePresence>
         </motion.div>
       )}
-    </>
+    </PasswordGate>
   );
 }
